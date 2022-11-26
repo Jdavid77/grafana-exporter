@@ -1,22 +1,23 @@
 package main
 
 import (
-	grafana "github.com/grafana/grafana-api-golang-client"
-	"go.uber.org/zap"
+	"internal/configuration"
+	"internal/logger"
 
-	env "grafana-exporter/pkg/env"
+	grafana "github.com/grafana/grafana-api-golang-client"
 )
 
 func main() {
-	log := zap.S()
-	envConfig, err := env.LoadConfig("config.yaml")
-
+	log := logger.InitZapLog()
+	config, err := configuration.LoadConfig("config.yaml")
+	log.Info("Starting application..")
 	if err != nil {
-		log.Error()
+		log.Error(err.Error())
 	}
 
-	config := grafana.Config{
-		APIKey:      envConfig.Grafana.ApiKey,
+	grafanaConfig := grafana.Config{
+
+		APIKey:      config.Grafana.ApiKey,
 		BasicAuth:   nil,
 		HTTPHeaders: nil,
 		Client:      nil,
@@ -24,7 +25,7 @@ func main() {
 		NumRetries:  2,
 	}
 
-	client, err := grafana.New(envConfig.Grafana.Url, config)
+	client, err := grafana.New(config.Grafana.Url, grafanaConfig)
 
 	if err != nil {
 		log.Error("Error connecting to Grafana API")
@@ -35,6 +36,6 @@ func main() {
 	if err != nil {
 		log.Error("Error retrieving Dashboards")
 	}
-	log.Infof("%v", dashboards)
+	log.Infof("dashboard %v", dashboards)
 
 }

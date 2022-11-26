@@ -1,10 +1,10 @@
 package main
 
 import (
-	"internal/configuration"
-	"internal/logger"
-
 	grafana "github.com/grafana/grafana-api-golang-client"
+
+	configuration "grafana_exporter/pkg/configuration"
+	logger "grafana_exporter/pkg/logger"
 )
 
 func main() {
@@ -38,4 +38,8 @@ func main() {
 	}
 	log.Infof("dashboard %v", dashboards)
 
+	// for _, dashboard := range dashboards {
+	// 	dashboard.
+
+	// }
 }

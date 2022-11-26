@@ -1,0 +1,9 @@
+grafana:
+  url: http://test.grafana.com
+  apiKey: superapikey
+git:
+  username: gitusername
+  email: username@username.com
+  url: git@github.com:Jdavid77/grafana-exporter.git
+  directory: kubernetes/grafana/dashboards
+  privateKeyfile: ~/.ssh/id-rsa

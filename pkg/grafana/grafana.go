@@ -1,8 +1,12 @@
 package grafana
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"sync"
+
+	"grafana_exporter/pkg/logger"
 
 	grafana "github.com/grafana/grafana-api-golang-client"
 	"go.uber.org/zap"
@@ -11,9 +15,12 @@ import (
 type Grafana struct {
 	Client *grafana.Client
 	L      *zap.SugaredLogger
+	Url    string
+	ApiKey string
 }
 
 func NewGrafana(apiKey, url string) *Grafana {
+
 	grafanaConfig := grafana.Config{
 		APIKey:      apiKey,
 		BasicAuth:   nil,
@@ -30,12 +37,15 @@ func NewGrafana(apiKey, url string) *Grafana {
 
 	return &Grafana{
 		Client: client,
-		L:      zap.S(),
+		L:      logger.InitZapLog(),
+		Url:    url,
+		ApiKey: apiKey,
 	}
 }
 func (g Grafana) DownloadDashboards() {
 
 	dashboards, err := g.Client.Dashboards()
+	g.L.Info(len(dashboards))
 	if err != nil {
 		g.L.Error("Error retrieving Dashboards")
 	}
@@ -47,10 +57,60 @@ func (g Grafana) DownloadDashboards() {
 	for i := 0; i < sliceLength; i++ {
 		go func(i int) {
 			defer wg.Done()
-			val := dashboards[i]
-			g.L.Infof("i: %v, val: %v\n", i, val)
+
+			dashboard, err := g.Client.DashboardByUID(dashboards[i].UID)
+
+			if err != nil {
+				g.L.Errorf("Dashboard %s Not Found", dashboards[i].Slug)
+			}
+
+			folder, err := g.Client.Folder(dashboard.FolderID)
+
+			if err != nil {
+				g.L.Errorf("Folder %s Not Found", folder)
+			}
+
+			if folder.Title != "General" {
+
+				folder := "backup/" + folder.Title
+
+				if _, err := os.Stat(folder); os.IsNotExist(err) {
+					err := os.MkdirAll(folder, 0755)
+					if err != nil {
+						panic(err)
+					}
+				}
+
+				dashboardPath := folder + "/" + dashboard.Meta.Slug
+
+				g.exportDashboard(dashboardPath,dashboard.Model,dashboard.Meta.Slug)
+
+
+			}
+
+			
 		}(i)
 	}
 	wg.Wait()
 	fmt.Println("Finished for loop")
+}
+
+
+func (g Grafana) exportDashboard(path string, dashboard interface{}, slug string) error {
+
+	file, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("fail to export %s: %v\n", slug, err)
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(dashboard)
+	if err != nil {
+		return fmt.Errorf("fail to export %s: %v\n", slug, err)
+	}
+
+	g.L.Infof("DASHBOARD SUCCESSFULLY EXPORTED: %s\n", slug)
+
+	return nil
 }

@@ -15,7 +15,7 @@ func InitZapLog() *zap.SugaredLogger {
 	if jsonLogs {
 		return initZapProdLog().Sugar()
 	}
-	return initZapDeveloperLog().Sugar()
+	return InitZapDeveloperLog().Sugar()
 
 }
 func initZapProdLog() *zap.Logger {
@@ -27,7 +27,7 @@ func initZapProdLog() *zap.Logger {
 	return logger
 }
 
-func initZapDeveloperLog() *zap.Logger {
+func InitZapDeveloperLog() *zap.Logger {
 	config := zap.NewDevelopmentConfig()
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"

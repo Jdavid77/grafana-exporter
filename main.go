@@ -15,10 +15,7 @@ func main() {
 	}
 
 	grafana := grafana.NewGrafana(config.Grafana.ApiKey, config.Grafana.Url)
-	allDashboards, err := grafana.Client.Dashboards()
-	if err != nil {
-		log.Error(err.Error())
-	}
-	log.Infof("%v", allDashboards)
+	grafana.DownloadDashboards()
+	
 
 }

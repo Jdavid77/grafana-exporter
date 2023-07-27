@@ -1,9 +1,11 @@
 package main
 
 import (
-	configuration "grafana_exporter/pkg/configuration"
-	grafana "grafana_exporter/pkg/grafana"
-	logger "grafana_exporter/pkg/logger"
+	"grafana_exporter/pkg/configuration"
+	"grafana_exporter/pkg/grafana"
+	"grafana_exporter/pkg/logger"
+	"grafana_exporter/pkg/kustomization"
+
 )
 
 func main() {
@@ -16,6 +18,8 @@ func main() {
 
 	grafana := grafana.NewGrafana(config.Grafana.ApiKey, config.Grafana.Url)
 	grafana.DownloadDashboards()
+
+	kustomization.GenerateKustomizations("backup/")
 	
 
 }

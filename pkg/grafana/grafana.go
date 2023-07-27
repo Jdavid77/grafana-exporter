@@ -63,12 +63,14 @@ func (g Grafana) DownloadDashboards() {
 
 			if err != nil {
 				g.L.Errorf("Dashboard %s Not Found", dashboards[i].Slug)
+				return
 			}
 
 			folder, err := g.Client.Folder(dashboard.FolderID)
 
 			if err != nil {
 				g.L.Errorf("Folder %s Not Found", folder)
+				return
 			}
 
 			if folder.Title != "General" {

@@ -42,6 +42,7 @@ func NewGrafana(apiKey, url string) *Grafana {
 		ApiKey: apiKey,
 	}
 }
+
 func (g Grafana) DownloadDashboards() {
 
 	dashboards, err := g.Client.Dashboards()
@@ -73,6 +74,7 @@ func (g Grafana) DownloadDashboards() {
 			if folder.Title != "General" {
 
 				folder := "backup/" + folder.Title
+				dashboardPath := folder + "/" + dashboard.Meta.Slug
 
 				if _, err := os.Stat(folder); os.IsNotExist(err) {
 					err := os.MkdirAll(folder, 0755)
@@ -81,10 +83,11 @@ func (g Grafana) DownloadDashboards() {
 					}
 				}
 
-				dashboardPath := folder + "/" + dashboard.Meta.Slug
-
-				g.exportDashboard(dashboardPath,dashboard.Model,dashboard.Meta.Slug)
-
+				if err := exportDashboard(dashboardPath, dashboard.Model, dashboard.Meta.Slug); err != nil {
+					g.L.Infof("DASHBOARD %s COULDN'T BE EXPORTED: %s\n", dashboard.Meta.Slug, err)
+				} else {
+					g.L.Infof("DASHBOARD SUCCESSFULLY EXPORTED: %s\n", dashboard.Meta.Slug)
+				}
 
 			}
 
@@ -96,21 +99,19 @@ func (g Grafana) DownloadDashboards() {
 }
 
 
-func (g Grafana) exportDashboard(path string, dashboard interface{}, slug string) error {
+func exportDashboard(path string, dashboard interface{}, slug string) error {
 
 	file, err := os.Create(path)
 	if err != nil {
-		return fmt.Errorf("fail to export %s: %v\n", slug, err)
+		return err
 	}
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
 	err = encoder.Encode(dashboard)
 	if err != nil {
-		return fmt.Errorf("fail to export %s: %v\n", slug, err)
+		return err
 	}
-
-	g.L.Infof("DASHBOARD SUCCESSFULLY EXPORTED: %s\n", slug)
 
 	return nil
 }
